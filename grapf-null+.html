@@ -1,0 +1,128 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <style type="text/css">
+  	svg .gridX, svg .gridY {
+  stroke: black;
+  stroke-dasharray: 1 2;
+  stroke-width: 1;
+}
+  </style>
+</head>
+<body>
+	<div id="svgContainer"></div>
+	<script type="text/javascript">
+	
+		var xmlns="http://www.w3.org/2000/svg";
+		var boxWidth=800;
+		var boxHeight=500;
+		var maxX=1000;
+		var maxY=100;
+		var marginR=20;
+		var marginL=20;
+		var marginT=20;
+		var marginB=20;
+		var startX=marginL;
+		var endX=boxWidth-marginL-marginR;
+		var startY=boxHeight-marginB;
+		var endY=marginT;
+		var gridWidth=endX-startX;
+		var gridHeight=startY-endY;
+		var gridStepX=100;
+		var gridStepY=20;
+
+		function valX(val) {
+		  return marginR+(gridWidth/maxX)*val;
+		}
+
+		function valY(val) {
+		  return marginT+gridHeight-(gridHeight/maxY)*val;
+		}
+
+
+		//gridX
+		function gridX(svgElem) {
+			var g = document.createElementNS(xmlns, "g");
+			g.className.baseVal="grid gridX"
+			svgElem.appendChild(g);
+
+			for (var i = 0; i < maxX/gridStepX; i++) {
+				var l= document.createElementNS(xmlns, "line");
+				l.x1.baseVal.value=valX(i*gridStepX);
+				l.x2.baseVal.value=valX(i*gridStepX);
+				l.y1.baseVal.value=startY;
+				l.y2.baseVal.value=endY;
+				g.appendChild(l);      
+			}
+		} //gridX
+
+
+		//gridY
+		function gridY(svgElem) {
+			var g = document.createElementNS(xmlns, "g");
+			g.className.baseVal="grid gridY"
+			svgElem.appendChild(g);
+
+			for (var i = 0; i < maxY/gridStepY; i++) {
+				var l= document.createElementNS(xmlns, "line");
+				l.y1.baseVal.value=valY(i*gridStepY);
+				l.y2.baseVal.value=valY(i*gridStepY);
+				l.x1.baseVal.value=startX;
+				l.x2.baseVal.value=endX;
+				g.appendChild(l);      
+			}
+		} //gridY
+
+
+		//Создание квадрата
+		//x,y координаты левого верхнего угла
+		//width ширина
+		//height высота 
+		//rx,ry радиусы скругления
+		//className имя класса
+		//style объект стилей
+		//id идентификатор
+		function drawRect(x=0,y=0,width=0,height=0,rx=0,ry=0,style='',className='',id='') {
+			var g = document.createElementNS(xmlns, "rect");
+			g.className.baseVal=className;
+			g.x.baseVal=x;
+			g.y.baseVal=y;
+			g.rx.baseVal=rx;
+			g.ry.baseVal=ry;
+			g.width.baseVal=width;
+			g.height.baseVal=height;
+			g.id=id;
+			return g;
+		}
+
+		//gridBorder
+		function gridBorder(svgElem) {
+			var g = document.createElementNS(xmlns, "rect");
+			g.className.baseVal="grid gridBorder";
+			svgElem.appendChild(g);
+			for (var i = 0; i < maxY/gridStepY; i++) {
+				var l= document.createElementNS(xmlns, "line");
+				l.y1.baseVal.value=valY(i*gridStepY);
+				l.y2.baseVal.value=valY(i*gridStepY);
+				l.x1.baseVal.value=startX;
+				l.x2.baseVal.value=endX;
+				g.appendChild(l);      
+			}
+		} //gridBorder
+
+		var svgElem = document.createElementNS(xmlns, "svg");
+		svgElem.setAttributeNS(null, "viewBox", "0 0 " + boxWidth + " " + boxHeight);
+
+		svgElem.setAttributeNS(null, "width", boxWidth);
+		svgElem.setAttributeNS(null, "height", boxHeight);
+		svgElem.style.display = "block";
+
+		console.log(drawRect())
+		gridX(svgElem);
+		gridY(svgElem);
+
+var svgContainer = document.getElementById("svgContainer");
+	svgContainer.appendChild(svgElem);
+  </script>  
+</body>
+</html>

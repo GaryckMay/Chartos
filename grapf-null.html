@@ -1,0 +1,428 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <style type="text/css">
+  	svg .gridX, svg .gridY {
+  stroke: black;
+  stroke-dasharray: 1 2;
+  stroke-width: 1;
+}
+  </style>
+</head>
+<body>
+	<div id="svgContainer"></div>
+	<script type="text/javascript" src="akima.js"></script>
+	
+	<script type="text/javascript">
+'use strict';
+
+var Chartos = {
+		product: "Chartos",
+		version: "0.0.1",
+		author: "GarykMay"
+}
+
+Chartos.Options={
+	boxWidth : 800,
+  	boxHeight : 500,
+  	minX : 160,
+  	minY : 12,
+  	maxX : 300,
+	maxY : 20,
+	marginR : 20,
+	marginL : 30,
+	marginT : 20,
+	marginB : 20,
+	gridStepX : 10,
+	gridStepY : 1,
+	colorArray: ['#4572A7', '#AA4643', '#89A54E', '#80699B', '#3D96AE',
+              '#DB843D', '#92A8CD', '#A47D7C', '#B5CA92'],
+    Line : {
+    	width: 2,
+    	type: 'curve', //curve или line
+    },
+    Point: {
+    	visible: true,
+    	radius: 3,
+    }
+}
+
+Chartos.chart = function(container,arr) {
+	var Options=Chartos.Options,
+		boxWidth = Options.boxWidth,
+	  	boxHeight = Options.boxHeight,
+	  	maxX = Options.maxX,
+		maxY = Options.maxY,
+		minX = Options.minX,
+		minY = Options.minY,
+		marginR = Options.marginR,
+		marginL = Options.marginL,
+		marginT = Options.marginT,
+		marginB = Options.marginB,
+		gridStepX = Options.gridStepX,
+		gridStepY = Options.gridStepY,
+  		startX = Options.marginL,
+		endX = Options.boxWidth - Options.marginL - Options.marginR,
+		startY = Options.boxHeight - Options.marginB,
+		endY = Options.marginT,
+		gridWidth = endX - startX,
+		gridHeight = startY - endY,
+		lineWidth = Options.Line.width,
+		lineType = Options.Line.type,
+		pointVisible = Options.Point.visible,
+		pointRadius = Options.Point.radius,
+		xmlns='http://www.w3.org/2000/svg';
+	this.container = container;
+	this.svg = null;
+	this.Graph = new Array();
+  
+	this.valX = function(val) {
+    	return marginL + gridWidth / (maxX-minX) * (val-minX);
+  	};
+	this.valY = function(val) {
+    	return marginT + gridHeight - (gridHeight / (maxY-minY) * (val-minY));
+  	};
+
+  	this.getPolyline = function(arrCoord, style, className, id) {
+    	var i, j, len, p, points;
+    	if (style == null) {
+      		style = "";
+    	}
+    	if (className == null) {
+      		className = "";
+    	}
+    	if (id == null) {
+      		id = "";
+    	}
+    	p = document.createElementNS(xmlns, "polyline");
+    	p.className.baseVal = className;
+    	p.id = id;
+    	p.style.cssText = "fill:none;" + style;
+    	points = "";
+    	for (j = 0, len = arrCoord.length; j < len; j++) {
+      		i = arrCoord[j];
+      		points = points + " " + i[0] + "," + i[1];
+    	}
+    	p.setAttributeNS(null, "points", points);
+    	return p;
+  	};
+
+ 	this.getLine = function(x1, y1, x2, y2, style, id) {
+	    var l;
+	    if (style == null) {
+	      style = "";
+	    }
+	    if (id == null) {
+	      id = "";
+	    }
+	    l = document.createElementNS(xmlns, "line");
+	    l.y1.baseVal.value = y1;
+	    l.y2.baseVal.value = y2;
+	    l.x1.baseVal.value = x1;
+	    l.x2.baseVal.value = x2;
+	    l.style.cssText = style;
+	    l.id = id;
+	    return l;
+	};
+
+	this.getRect = function(x, y, width, height, rx, ry, style, className, id) {
+	    var r;
+	    if (x == null) {
+	      x = 0;
+	    }
+	    if (y == null) {
+	      y = 0;
+	    }
+	    if (width == null) {
+	      width = 0;
+	    }
+	    if (height == null) {
+	      height = 0;
+	    }
+	    if (rx == null) {
+	      rx = 0;
+	    }
+	    if (ry == null) {
+	      ry = 0;
+	    }
+	    if (style == null) {
+	      style = '';
+	    }
+	    if (className == null) {
+	      className = '';
+	    }
+	    if (id == null) {
+	      id = '';
+	    }
+	    r = document.createElementNS(xmlns, "rect");
+	    r.className.baseVal = className;
+	    r.x.baseVal.value = x;
+	    r.y.baseVal.value = y;
+	    r.rx.baseVal.value = rx;
+	    r.ry.baseVal.value = ry;
+	    r.width.baseVal.value = width;
+	    r.height.baseVal.value = height;
+	    r.style.cssText = style;
+	    r.id = id;
+	    return r;
+	};
+
+	this.getText = function(text, x, y, style, className, id) {
+	    var t;
+	    if (text == null) {
+	      text = "";
+	    }
+	    if (x == null) {
+	      x = 0;
+	    }
+	    if (y == null) {
+	      y = 0;
+	    }
+	    if (style == null) {
+	      style = "";
+	    }
+	    if (className == null) {
+	      className = "";
+	    }
+	    if (id == null) {
+	      id = "";
+	    }
+	    t = document.createElementNS(xmlns, "text");
+	    t.className.baseVal = className;
+	    t.style.cssText = style;
+	    t.id = id;
+	    t.setAttributeNS(null, "x", x);
+	    t.setAttributeNS(null, "y", y);
+	    t.innerHTML = text;
+	    return t;
+	};
+
+	this.getCircle = function(cx, cy, r, fill, stroke, strokeWidth,id='') {
+
+		var c = document.createElementNS(xmlns, "circle");
+
+		c.id=id;
+		c.setAttributeNS(null,"cx", cx);
+		c.setAttributeNS(null,"cy", cy);
+		c.setAttributeNS(null,"r", r);
+		c.setAttributeNS(null,"fill", fill);
+		c.setAttributeNS(null,"stroke", stroke);
+		c.setAttributeNS(null,"stroke-width", strokeWidth);
+		return c;
+	};
+
+	this.getCurve = function(x1, y1, cx1, cy1, x2, y2, cx2, cy2, stroke, width=1,id='') {
+		var moveTo = "M " + x1 + " " + y1,
+			curveTo = "C " + cx1 + " " + cy1 + " " + cx2 + " " + cy2 + " " + x2 + " " + y2;
+		var c = document.createElementNS(xmlns, "path");
+		c.id=id;
+		c.setAttributeNS(null,"d", moveTo + " " + curveTo);
+		c.setAttributeNS(null,"fill", "transparent");
+		c.setAttributeNS(null,"stroke", stroke);
+		c.setAttributeNS(null,"stroke-width", width);
+		return c;
+	}
+
+
+	this.getLine = function(x1, y1, x2, y2, fill, stroke, width=1,id='') {
+		var moveTo = "M " + x1 + " " + y1,
+			lineTo = "L " + x2 + " " + y2;
+		var l = document.createElementNS(xmlns, "path");
+
+		l.id=id;
+		l.setAttributeNS(null,"d", moveTo + " " + lineTo + " Z");
+		l.setAttributeNS(null,"fill", fill);
+		l.setAttributeNS(null,"stroke", stroke);
+		l.setAttributeNS(null,"stroke-width", width);
+
+		return l;
+	}
+
+	this.drawGridBorder = function() {
+	    var b = this.getRect(marginL, marginT, gridWidth, gridHeight, 0, 0, "fill: none; stroke: black", "gridBorder");
+	    this.svg.appendChild(b);
+	    return b;
+	};
+
+	this.drawGridX = function() {
+	    var g, i, l;
+	    g = document.createElementNS(xmlns, "g");
+	    g.className.baseVal = "grid gridX";
+	    this.svg.appendChild(g);
+	    i = minX / gridStepX+1;
+	    while (i < maxX / gridStepX) {
+	      l = this.getLine(this.valX(i * gridStepX), startY, this.valX(i * gridStepX), endY);
+	      g.appendChild(l);
+	      i++;
+	    }
+	    return g;
+	};
+
+	this.drawGridY = function() {
+	    var g, i, l;
+	    g = document.createElementNS(xmlns, "g");
+	    g.className.baseVal = "grid gridY";
+	    this.svg.appendChild(g);
+	    i = minY / gridStepY+1;
+	    while (i < maxY / gridStepY) {
+	      l = this.getLine(startX, this.valY(i * gridStepY), endX, this.valY(i * gridStepY));
+	      g.appendChild(l);
+	      i++;
+	    }
+	    return g;
+	};
+
+	this.setLabelX = function() {
+	    var box, boxH, boxW, boxX, boxY, g, i, t, x, y;
+	    g = document.createElementNS(xmlns, "g");
+	    g.className.baseVal = "label labelX";
+	    this.svg.appendChild(g);
+	    i = minX / gridStepX;
+	    while (i < maxX / gridStepX) {
+	      x = this.valX(i * gridStepX);
+	      y = startY;
+	      t = this.getText(i * gridStepX, x, y, "color:black");
+	      g.appendChild(t);
+	      box = t.getBBox();
+	      boxX = box.x;
+	      boxY = box.y;
+	      boxW = box.width;
+	      boxH = box.height;
+	      t.setAttributeNS(null, "y", y + boxH);
+	      t.setAttributeNS(null, "x", x - boxW / 2);
+	      i++;
+	    }
+	    return g;
+	};
+
+	this.setLabelY = function() {
+	    var box, boxH, boxW, boxX, boxY, g, i, t, x, y;
+	    g = document.createElementNS(xmlns, "g");
+	    g.className.baseVal = "label labelY";
+	    this.svg.appendChild(g);
+	    i = minY / gridStepY;
+	    while (i < maxY / gridStepY) {
+	      x = startX;
+	      y = this.valY(i * gridStepY);
+	      t = this.getText(i * gridStepY, x, y, "color:black");
+	      g.appendChild(t);
+	      box = t.getBBox();
+	      boxX = box.x;
+	      boxY = box.y;
+	      boxW = box.width;
+	      boxH = box.height;
+	      t.setAttributeNS(null, "y", y + boxH / 3);
+	      t.setAttributeNS(null, "x", x - boxW);
+	      i++;
+	    }
+	    return g;
+	};
+
+	this.addGraph = function(arr) {
+	    var arrCoord, i, j, len, p;
+	    if (arr == null) {
+	      arr = [];
+	    }
+	    arrCoord = [];
+	    for (j = 0, len = arr.length; j < len; j++) {
+	      i = arr[j];
+	      arrCoord.push([this.valX(i[0]), this.valY(i[1])]);
+	    }
+	    p = this.getPolyline(arrCoord, "stroke:" + Options.colorArray[this.Graph.length]);
+	    this.svg.appendChild(p);
+	    return this.Graph.push(p);
+	};
+
+	this.addLine = function(arr) {
+		var x1 = 0,
+			x2 = 0,
+			y1 = null,
+			y2 = 0,
+			_this=this;
+		arr.forEach(function(value) {
+			//добавить проверку выхода за рамки
+			x2 = _this.valX(value[0]);
+			y2 = _this.valY(value[1]);
+			var point = _this.getCircle(x2,y2,pointRadius,Options.colorArray[_this.Graph.length],Options.colorArray[_this.Graph.length],lineWidth);
+			_this.svg.appendChild(point);
+			if (null!=y1) {
+				var line;
+				if (lineType=='curve') {
+					line = _this.getCurve(x1,y1,(x1+x2)/2,y1,x2,y2,(x1+x2)/2,y2,Options.colorArray[_this.Graph.length],lineWidth);
+				} else {
+					console.log(lineType);
+					line = _this.getLine(x1,y1,x2,y2,Options.colorArray[_this.Graph.length],Options.colorArray[_this.Graph.length],lineWidth);
+				}
+				_this.svg.appendChild(line);
+			} 
+			x1 = x2;
+			y1 = y2;
+		})
+	}
+
+	this.build = function(arr) {
+		this.svg = document.createElementNS(xmlns, 'svg');
+		this.svg.setAttributeNS(null, 'viewBox', '0 0 ' + boxWidth + ' ' + boxHeight);
+		this.svg.setAttributeNS(null, 'width', boxWidth);
+		this.svg.setAttributeNS(null, 'height', boxHeight);
+		this.svg.style.display = 'block';
+		var cont = document.getElementById(this.container);
+		cont.appendChild(this.svg);
+		this.drawGridX();
+		this.drawGridY();
+		this.drawGridBorder();
+		this.setLabelX();
+		this.setLabelY();
+		//this.addGraph(arr);
+		this.addLine(arr);
+		
+    return this;
+  }
+
+  return this.build(arr);
+};
+
+var arr = [
+	[184,19], 
+	[185,17], 
+	[186,15],
+	[196,15],
+	[205,13],
+	[214,13],
+	[223,13],
+	[232,13],
+	[241,13],
+	[250,13],
+	[259,13],
+	];
+var arrD=new Array();	
+for (var i = 1; i < arr.length; i++) {
+	//arrD.push(arr[i-1]);
+	//gen X
+	var gX=new Array();
+	for (var j = arr[i-1][0]; j<=arr[i][0] ; j++) {
+		gX.push(j);
+	}
+	var tmpX=[arr[i-1][0],arr[i][0]];
+	var tmpY=[arr[i-1][1],arr[i][1]];
+	var gY=Akima(tmpX,tmpY,gX);
+	console.log(i,tmpX,tmpY,gX,gY);
+	//debugger;
+}
+/*var y=[259,250,241,232,223,214,205,196,186,185,184]
+var x=[13.1,13.2,13.3,13.4,13.5,13.6,13.7,15,15.5,17,19]
+var xI=new Array();
+var xI=[13.1,13.2,13.3,13.4,13.5,13.6,13.7,14,15,15,17,18,19]
+var yI=Akima(x,y,xI);
+console.log(xI,yI);
+var arrD=new Array();
+for (var i = 0; i < xI.length; i++) {
+	arrD.push([xI[i],yI[i]]);
+}
+console.log(arrD);*/
+var chart = Chartos.chart('svgContainer',arr);
+console.log(chart);
+
+	</script> 
+</body>
+</html>
